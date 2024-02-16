@@ -29,4 +29,5 @@ func setUpRouters(router *gin.Engine, db *gorm.DB) {
 	router.POST("/ping", func(c *gin.Context) {
 		api.PingHandler(db, c)
 	})
+	router.GET("/api/commonstudents", api.CommonStudentsHandler(db))
 }

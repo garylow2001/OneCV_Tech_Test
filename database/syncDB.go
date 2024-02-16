@@ -7,7 +7,7 @@ import (
 
 func SyncDB() {
 	// Reset the database
-	DB.Migrator().DropTable(&models.Student{}, &models.Teacher{})
+	DB.Migrator().DropTable(&models.Student{}, &models.Teacher{}, &models.TeacherStudent{})
 	// Auto migrate all models
 	err := DB.AutoMigrate(&models.Teacher{}, &models.Student{})
 	if err != nil {

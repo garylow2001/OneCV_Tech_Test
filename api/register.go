@@ -33,7 +33,7 @@ func RegisterHandler(db *gorm.DB, c *gin.Context) {
 		result := db.Where("email = ?", studentEmail).First(&student)
 		if result.Error != nil {
 			// Create student if not found
-			student = models.Student{Email: studentEmail, TeacherID: teacher.ID}
+			student = models.Student{Email: studentEmail}
 			createStudentError := db.Create(&student)
 			if createStudentError.Error != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": createStudentError.Error})
@@ -41,7 +41,7 @@ func RegisterHandler(db *gorm.DB, c *gin.Context) {
 			}
 		}
 		// Associate student with teacher
-		db.Model(&student).Association("Teachers").Append(&teacher)
+		db.Model(&teacher).Association("Students").Append(&student)
 	}
 
 	c.Status(http.StatusNoContent)
