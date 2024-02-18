@@ -24,9 +24,6 @@ func main() {
 
 func setUpRouters(router *gin.Engine, db *gorm.DB) {
 	router.POST("/api/register", api.RegisterHandler(db))
-	router.POST("/ping", func(c *gin.Context) {
-		api.PingHandler(db, c)
-	})
 	router.GET("/api/commonstudents", api.CommonStudentsHandler(db))
 	router.POST("/api/suspend", api.SuspendHandler(db))
 	router.POST("/api/retrievefornotifications", api.RetrieveForNotificationsHandler(db))

@@ -11,44 +11,29 @@ import (
 	"github.com/garylow2001/OneCV_Tech_Test/api"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func TestSuspendEndpoint(t *testing.T) {
 	// Test valid suspension
 	t.Run("Success", func(t *testing.T) {
-		r, mock := setupTestRouter()
+		r, mock := setUpRouters("/api/suspend", api.SuspendHandler)
 		defer mock.ExpectClose()
 		testSuspendSuccess(r, t, "student1@gmail.com", mock)
 	})
 
 	// Test student not found
 	t.Run("StudentNotFound", func(t *testing.T) {
-		r, mock := setupTestRouter()
+		r, mock := setUpRouters("/api/suspend", api.SuspendHandler)
 		defer mock.ExpectClose()
 		testStudentNotFoundFailure(r, t, "nonexistent@gmail.com", mock)
 	})
 
 	// Test student already suspended
 	t.Run("StudentAlreadySuspended", func(t *testing.T) {
-		r, mock := setupTestRouter()
+		r, mock := setUpRouters("/api/suspend", api.SuspendHandler)
 		defer mock.ExpectClose()
 		testStudentAlreadySuspendedFailure(r, t, "student1@gmail.com", mock)
 	})
-}
-
-func setupTestRouter() (*gin.Engine, sqlmock.Sqlmock) {
-	mockDb, mock, _ := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
-	dialector := postgres.New(postgres.Config{
-		Conn:       mockDb,
-		DriverName: "postgres",
-	})
-	db, _ := gorm.Open(dialector, &gorm.Config{})
-	r := gin.Default()
-	r.POST("/api/suspend", func(c *gin.Context) { api.SuspendHandler(db)(c) })
-
-	return r, mock
 }
 
 func testSuspendSuccess(r *gin.Engine, t *testing.T, studentEmail string, mock sqlmock.Sqlmock) {

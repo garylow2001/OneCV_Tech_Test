@@ -39,7 +39,7 @@ func RetrieveForNotificationsHandler(db *gorm.DB) gin.HandlerFunc {
 			Joins("inner join students on teacher_student_relations.student_id = students.id").
 			Where("teachers.email = ? AND students.suspended = ?", requestData.TeacherEmail, false).
 			Scan(&studentsUnderTeacherEmails).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to retrieve students"})
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to retrieve students"})
 			return
 		}
 
@@ -84,11 +84,13 @@ func validateMentionedStudents(mentionedStudentsEmails []string, db *gorm.DB, c 
 			Suspended bool
 		}
 		if err := db.Table("students").Where("email = ?", studentEmail).First(&student).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Failed to retrieve student with email: %s", studentEmail)})
+			c.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("Failed to retrieve student with email: %s", studentEmail)})
 			return err
 		}
 		if student.Suspended {
-			mentionedStudentsEmails = append(mentionedStudentsEmails[:i], mentionedStudentsEmails[i+1:]...)
+			if i >= 0 && i < len(mentionedStudentsEmails) {
+				mentionedStudentsEmails = append(mentionedStudentsEmails[:i], mentionedStudentsEmails[i+1:]...)
+			}
 		}
 	}
 	return nil

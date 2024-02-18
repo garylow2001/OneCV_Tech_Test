@@ -24,13 +24,13 @@ func SuspendHandler(db *gorm.DB) gin.HandlerFunc {
 		var student models.Student
 		result := db.Where("email = ?", requestData.StudentEmail).First(&student)
 		if result.Error != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("Student %s not found", requestData.StudentEmail)})
+			c.JSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Student %s not found", requestData.StudentEmail)})
 			return
 		}
 
 		// Check if student is already suspended
 		if student.Suspended {
-			c.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("Student %s is already suspended", requestData.StudentEmail)})
+			c.JSON(http.StatusConflict, gin.H{"message": fmt.Sprintf("Student %s is already suspended", requestData.StudentEmail)})
 			return
 		}
 
