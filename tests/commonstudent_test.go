@@ -10,36 +10,31 @@ import (
 	"github.com/garylow2001/OneCV_Tech_Test/api"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func TestCommonStudentsEndpoint(t *testing.T) {
-	// Create a mock database connection
-	mockDb, mock, _ := sqlmock.New()
-	dialector := postgres.New(postgres.Config{
-		Conn:       mockDb,
-		DriverName: "postgres",
-	})
-	db, _ := gorm.Open(dialector, &gorm.Config{})
-
-	// Set up a test router
-	r := gin.Default()
-	r.GET("/api/commonstudents", func(c *gin.Context) { api.CommonStudentsHandler(db)(c) })
-
 	// Test common students between two teachers
-	testCommonStudentsBetweenTwoTeachersSuccess(r, t,
-		"teacherken@gmail.com&teacher=teacherjoe@gmail.com",
-		[]string{"commonstudent1@gmail.com", "commonstudent2@gmail.com"},
-		mock,
-	)
+	t.Run("Success", func(t *testing.T) {
+		teacherStringGroup := "teacherken@gmail.com&teacher=teacherjoe@gmail.com"
+		r, mock := setUpRouters("/api/commonstudents", api.CommonStudentsHandler)
+		defer mock.ExpectClose()
+		testCommonStudentsBetweenTwoTeachersSuccess(r, t,
+			teacherStringGroup,
+			[]string{"commonstudent1@gmail.com", "commonstudent2@gmail.com"},
+			mock,
+		)
+	})
 
 	// Test common students of one teacher
-	testCommonStudentsOneTeacherSuccess(r, t,
-		"teacherken@gmail.com",
-		[]string{"commonstudent1@gmail.com", "commonstudent2@gmail.com", "student_only_under_teacher_ken@gmail.com"},
-		mock,
-	)
+	t.Run("Success2", func(t *testing.T) {
+		r, mock := setUpRouters("/api/commonstudents", api.CommonStudentsHandler)
+		defer mock.ExpectClose()
+		testCommonStudentsOneTeacherSuccess(r, t,
+			"teacherken@gmail.com",
+			[]string{"commonstudent1@gmail.com", "commonstudent2@gmail.com", "student_only_under_teacher_ken@gmail.com"},
+			mock,
+		)
+	})
 }
 
 func testCommonStudentsBetweenTwoTeachersSuccess(r *gin.Engine, t *testing.T, teacherStringGroup string, expectedStudents []string, mock sqlmock.Sqlmock) {

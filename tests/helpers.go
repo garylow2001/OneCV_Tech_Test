@@ -16,6 +16,7 @@ func setUpRouters(apiEndpoint string, handler func(db *gorm.DB) gin.HandlerFunc)
 	db, _ := gorm.Open(dialector, &gorm.Config{})
 	r := gin.Default()
 	r.POST(apiEndpoint, func(c *gin.Context) { handler(db)(c) })
+	r.GET(apiEndpoint, func(c *gin.Context) { handler(db)(c) })
 
 	return r, mock
 }
