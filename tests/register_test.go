@@ -26,7 +26,7 @@ func TestRegisterEndpoint(t *testing.T) {
 
 	// Set up a test router
 	r := gin.Default()
-	r.POST("/api/register", func(c *gin.Context) { api.RegisterHandler(db, c) })
+	r.POST("/api/register", func(c *gin.Context) { api.RegisterHandler(db)(c) })
 
 	// Set up expectations
 	mock.ExpectQuery(`^SELECT \* FROM "teachers" WHERE email = \$1 AND "teachers"."deleted_at" IS NULL ORDER BY "teachers"."id" LIMIT \$2`).
@@ -39,7 +39,13 @@ func TestRegisterEndpoint(t *testing.T) {
 		WithArgs("studenthon@gmail.com", 1).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "email"}).AddRow(1, "studenthon@gmail.com"))
 
-	// Test case: Successful registration
+	testSuccessfulRegistration(r, t)
+	testMissingTeacherInput(r, t)
+
+	// Add more test cases as needed (e.g., invalid student emails, database errors, etc.)
+}
+
+func testSuccessfulRegistration(r *gin.Engine, t *testing.T) {
 	payload := map[string]interface{}{
 		"teacher": "teacherken@gmail.com",
 		"students": []string{
@@ -53,19 +59,18 @@ func TestRegisterEndpoint(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNoContent, w.Code)
+}
 
-	// Test case: Invalid input (missing teacher email)
-	payload = map[string]interface{}{
+func testMissingTeacherInput(r *gin.Engine, t *testing.T) {
+	payload := map[string]interface{}{
 		"students": []string{
 			"studentjon@gmail.com",
 		},
 	}
-	reqBody, _ = json.Marshal(payload)
-	req, _ = http.NewRequest("POST", "/api/register", bytes.NewBuffer(reqBody))
+	reqBody, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", "/api/register", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
+	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-
-	// Add more test cases as needed (e.g., invalid student emails, database errors, etc.)
 }

@@ -1,9 +1,8 @@
 package models
 
-import "gorm.io/gorm"
-
-type TeacherStudent struct {
-	gorm.Model
-	TeacherEmail string `gorm:"primaryKey"`
-	StudentEmail string `gorm:"primaryKey"`
+type TeacherStudentRelation struct {
+	TeacherID uint `gorm:"primaryKey"`
+	StudentID uint `gorm:"primaryKey"`
+	Teacher   Teacher
+	Student   Student
 }
