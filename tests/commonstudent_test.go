@@ -14,7 +14,7 @@ import (
 
 func TestCommonStudentsEndpoint(t *testing.T) {
 	// Test common students between two teachers
-	t.Run("Success", func(t *testing.T) {
+	t.Run("TwoTeacherSuccess", func(t *testing.T) {
 		teacherStringGroup := "teacherken@gmail.com&teacher=teacherjoe@gmail.com"
 		r, mock := setUpRouters("/api/commonstudents", api.CommonStudentsHandler)
 		defer mock.ExpectClose()
@@ -26,7 +26,7 @@ func TestCommonStudentsEndpoint(t *testing.T) {
 	})
 
 	// Test common students of one teacher
-	t.Run("Success2", func(t *testing.T) {
+	t.Run("OneTeacherSuccess", func(t *testing.T) {
 		r, mock := setUpRouters("/api/commonstudents", api.CommonStudentsHandler)
 		defer mock.ExpectClose()
 		testCommonStudentsOneTeacherSuccess(r, t,

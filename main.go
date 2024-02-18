@@ -14,7 +14,7 @@ func init() {
 }
 
 func main() {
-	db := database.GetDB() // Assuming GetDB returns *gorm.DB
+	db := database.GetDB()
 	router := gin.Default()
 
 	setUpRouters(router, db)
@@ -23,6 +23,7 @@ func main() {
 }
 
 func setUpRouters(router *gin.Engine, db *gorm.DB) {
+	// Decouple db from the handlers for testability
 	router.POST("/api/register", api.RegisterHandler(db))
 	router.GET("/api/commonstudents", api.CommonStudentsHandler(db))
 	router.POST("/api/suspend", api.SuspendHandler(db))
