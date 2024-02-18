@@ -36,7 +36,7 @@ func RegisterHandler(db *gorm.DB) gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create student"})
 				return
 			}
-			db.Model(&teacher).Association("Students").Append(&student)
+			db.Model(&teacher).Association("Students").Append(student)
 		}
 
 		c.Status(http.StatusNoContent)

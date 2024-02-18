@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	database.LoadEnvVariables()
+	// database.LoadEnvVariables()
 	database.ConnectToDB()
 	database.SyncDB()
 }
@@ -19,7 +19,7 @@ func main() {
 
 	setUpRouters(router, db)
 
-	router.Run()
+	router.Run(":3000") // Run on port 3000
 }
 
 func setUpRouters(router *gin.Engine, db *gorm.DB) {
