@@ -8,7 +8,6 @@ import (
 )
 
 func init() {
-	// database.LoadEnvVariables()
 	database.ConnectToDB()
 	database.SyncDB()
 }

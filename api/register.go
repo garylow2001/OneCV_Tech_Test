@@ -22,14 +22,14 @@ func RegisterHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check if teacher exists
+		// Check if teacher exists and create if not found
 		teacher, err := getOrCreateTeacher(db, requestData.Teacher)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create teacher"})
 			return
 		}
 
-		// Register students
+		// Register students to teacher, and create students if not found
 		for _, studentEmail := range requestData.Students {
 			student, err := getOrCreateStudent(db, studentEmail)
 			if err != nil {
