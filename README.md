@@ -1,3 +1,8 @@
+# Deployed site
+You can access this API hosted on Render at: https://onecvtest.onrender.com/
+
+Please note that as I have deployed the API using the free web service version on Render, the API may sometimes load slowly on the initial request.
+
 # Steps to running API server locally
 
 ## 1. Clone the Repository
