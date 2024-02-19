@@ -14,7 +14,7 @@ HTTPS: Clone with `git clone https://github.com/garylow2001/OneCV_Tech_Test.git`
 SSH: Clone with `git clone git@github.com:garylow2001/OneCV_Tech_Test.git`
 
 ## 2. Install Go:
-Ensure that you have Go installed on your system. You can download and install it from the official Go website: https://golang.org/dl/.
+Ensure that you have Go installed on your system. You can download and install it from the official Go website: https://go.dev/dl/.
 
 ## 3. Install Dependencies:
 Navigate to the directory where you cloned the repository.
@@ -28,6 +28,8 @@ Ensure that you are on the root of the api directory (where main.go exists), the
 `go run main.go`
 
 The api should now be running and listening for incoming requests on the port 3000.
+
+Disclaimer about the database: Usually I would store the port and database url in a .env as a secret so that it is not publicly accessible. However for the purpose of submission I have left it in the code.
 
 ## 5. Testing:
 To run the unit tests, first cd into tests
