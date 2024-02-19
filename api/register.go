@@ -16,9 +16,13 @@ type RegisterRequest struct {
 func RegisterHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Parse request body
-		var requestData RegisterRequest
-		if err := c.BindJSON(&requestData); err != nil {
+		requestData, validateErr := validateRequest(c)
+		if validateErr != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request format"})
+			return
+		}
+		if len(requestData.Students) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "No students provided"})
 			return
 		}
 
@@ -41,6 +45,14 @@ func RegisterHandler(db *gorm.DB) gin.HandlerFunc {
 
 		c.Status(http.StatusNoContent)
 	}
+}
+
+func validateRequest(c *gin.Context) (RegisterRequest, error) {
+	var requestData RegisterRequest
+	if err := c.BindJSON(&requestData); err != nil {
+		return RegisterRequest{}, err
+	}
+	return requestData, nil
 }
 
 func getOrCreateTeacher(db *gorm.DB, teacherEmail string) (*models.Teacher, error) {

@@ -33,7 +33,7 @@ Next, run
 
 `go test`
 
-It should show "Pass" and "ok" at the end
+It should show "PASS" and "ok" at the end
 
 To run individual test files, make sure to include `helpers.go` file, for example:
 

@@ -28,8 +28,15 @@ func CommonStudentsHandler(db *gorm.DB) gin.HandlerFunc {
 }
 
 func parseQueryParams(c *gin.Context) []string {
+	var validTeachers []string
 	teachers := c.QueryArray("teacher")
-	return teachers
+	for _, teacher := range teachers {
+		// Ensure that teacher is not empty
+		if teacher != "" {
+			validTeachers = append(validTeachers, teacher)
+		}
+	}
+	return validTeachers
 }
 
 func retrieveCommonStudents(db *gorm.DB, teachers []string) ([]string, error) {
