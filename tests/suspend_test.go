@@ -22,14 +22,14 @@ func TestSuspendEndpoint(t *testing.T) {
 	})
 
 	// Test student not found
-	t.Run("StudentNotFound", func(t *testing.T) {
+	t.Run("StudentNotFoundFailure", func(t *testing.T) {
 		r, mock := setUpRouters("/api/suspend", api.SuspendHandler)
 		defer mock.ExpectClose()
 		testStudentNotFoundFailure(r, t, "nonexistent@gmail.com", mock)
 	})
 
 	// Test student already suspended
-	t.Run("StudentAlreadySuspended", func(t *testing.T) {
+	t.Run("StudentAlreadySuspendedFailure", func(t *testing.T) {
 		r, mock := setUpRouters("/api/suspend", api.SuspendHandler)
 		defer mock.ExpectClose()
 		testStudentAlreadySuspendedFailure(r, t, "student1@gmail.com", mock)

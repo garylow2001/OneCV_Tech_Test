@@ -24,8 +24,24 @@ func TestRetrieveForNotificationsHandler(t *testing.T) {
 		testRetrieveForNotificationsSuccess(r, t, "teacherken@gmail.com", testMessage, mock)
 	})
 
+	// Test student in notification suspended not included in recipients
+	t.Run("StudentInNotificationSuspendedNotIncludedSuccess", func(t *testing.T) {
+		r, mock := setUpRouters("/api/retrievefornotifications", api.RetrieveForNotificationsHandler)
+		defer mock.ExpectClose()
+		testMessage := "Hello students! @studentagnes@gmail.com @studentmiche@gmail.com"
+		testStudentInNotificationSuspendedSuccess(r, t, "teacherken@gmail.com", testMessage, mock)
+	})
+
+	// Test student under teacher not included in recipients
+	t.Run("StudentUnderTeacherSuspendedNotIncludedSuccess", func(t *testing.T) {
+		r, mock := setUpRouters("/api/retrievefornotifications", api.RetrieveForNotificationsHandler)
+		defer mock.ExpectClose()
+		testMessage := "Hello students! @studentagnes@gmail.com @studentmiche@gmail.com"
+		testStudentUnderTeacherSuspendedSuccess(r, t, "teacherken@gmail.com", testMessage, mock)
+	})
+
 	// Test invalid notification format (missing @)
-	t.Run("InvalidNotificationFormat", func(t *testing.T) {
+	t.Run("InvalidNotificationFormatFailure", func(t *testing.T) {
 		r, mock := setUpRouters("/api/retrievefornotifications", api.RetrieveForNotificationsHandler)
 		defer mock.ExpectClose()
 		testMessageMissingSymbol := "Hello students studentagnes@gmail.com @studentmiche@gmail.com"
@@ -33,15 +49,23 @@ func TestRetrieveForNotificationsHandler(t *testing.T) {
 	})
 
 	// Test student not found
-	t.Run("StudentNotFound", func(t *testing.T) {
+	t.Run("StudentNotFoundFailure", func(t *testing.T) {
 		r, mock := setUpRouters("/api/retrievefornotifications", api.RetrieveForNotificationsHandler)
 		defer mock.ExpectClose()
 		testMessage := "Hello students! @nonexistent@gmail.com"
 		testRetrieveForNotificationsStudentNotFound(r, t, "teacherken@gmail.com", testMessage, mock)
 	})
+
+	// Test teacher not found
+	t.Run("TeacherNotFoundFailure", func(t *testing.T) {
+		r, mock := setUpRouters("/api/retrievefornotifications", api.RetrieveForNotificationsHandler)
+		defer mock.ExpectClose()
+		testMessage := "Hello students! @studentagnes@gmail.com @studentmiche@gmail.com"
+		testRetrieveForNotificationsTeacherNotFound(r, t, testMessage, mock)
+	})
 }
 
-func testRetrieveForNotificationsSuccess(r *gin.Engine, t *testing.T, teacherEmail, notification string, mock sqlmock.Sqlmock) {
+func testRetrieveForNotificationsSuccess(r *gin.Engine, t *testing.T, teacherEmail string, notification string, mock sqlmock.Sqlmock) {
 	// Set up expectations
 	mock.ExpectQuery("^SELECT \\* FROM \"students\" WHERE email = \\$1 ORDER BY \"students\".\"suspended\" LIMIT \\$2$").
 		WithArgs("studentagnes@gmail.com", 1).
@@ -61,6 +85,45 @@ func testRetrieveForNotificationsSuccess(r *gin.Engine, t *testing.T, teacherEma
 	testRequestForNotifications(r, t, teacherEmail, notification, http.StatusOK, expectedRecipients, mock)
 }
 
+func testStudentInNotificationSuspendedSuccess(r *gin.Engine, t *testing.T, teacherEmail string, notification string, mock sqlmock.Sqlmock) {
+	// Set up expectations
+	mock.ExpectQuery("^SELECT \\* FROM \"students\" WHERE email = \\$1 ORDER BY \"students\".\"suspended\" LIMIT \\$2$").
+		WithArgs("studentagnes@gmail.com", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "email", "suspended"}).
+			AddRow(1, "studentagnes@gmail.com", true)) // Agnes is suspended
+	mock.ExpectQuery("^SELECT \\* FROM \"students\" WHERE email = \\$1 ORDER BY \"students\".\"suspended\" LIMIT \\$2$").
+		WithArgs("studentmiche@gmail.com", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "email", "suspended"}).
+			AddRow(2, "studentmiche@gmail.com", false))
+	mock.ExpectQuery("^SELECT DISTINCT students.email FROM \"teachers\" inner join teacher_student_relations on teachers.id = teacher_student_relations.teacher_id inner join students on teacher_student_relations.student_id = students.id WHERE teachers.email = \\$1 AND students.suspended = \\$2$").
+		WithArgs("teacherken@gmail.com", false).
+		WillReturnRows(sqlmock.NewRows([]string{"email"}).
+			AddRow("studentbob@gmail.com"))
+
+	// Test the request
+	expectedRecipients := []string{"studentbob@gmail.com", "studentmiche@gmail.com"} // Agnes should not be inside
+	testRequestForNotifications(r, t, teacherEmail, notification, http.StatusOK, expectedRecipients, mock)
+}
+
+func testStudentUnderTeacherSuspendedSuccess(r *gin.Engine, t *testing.T, teacherEmail string, notification string, mock sqlmock.Sqlmock) {
+	// Set up expectations
+	mock.ExpectQuery("^SELECT \\* FROM \"students\" WHERE email = \\$1 ORDER BY \"students\".\"suspended\" LIMIT \\$2$").
+		WithArgs("studentagnes@gmail.com", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "email", "suspended"}).
+			AddRow(1, "studentagnes@gmail.com", false))
+	mock.ExpectQuery("^SELECT \\* FROM \"students\" WHERE email = \\$1 ORDER BY \"students\".\"suspended\" LIMIT \\$2$").
+		WithArgs("studentmiche@gmail.com", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "email", "suspended"}).
+			AddRow(2, "studentmiche@gmail.com", false))
+	mock.ExpectQuery("^SELECT DISTINCT students.email FROM \"teachers\" inner join teacher_student_relations on teachers.id = teacher_student_relations.teacher_id inner join students on teacher_student_relations.student_id = students.id WHERE teachers.email = \\$1 AND students.suspended = \\$2$").
+		WithArgs("teacherken@gmail.com", false).
+		WillReturnRows(sqlmock.NewRows([]string{"email"}))
+
+	// Test the request
+	expectedRecipients := []string{"studentagnes@gmail.com", "studentmiche@gmail.com"}
+	testRequestForNotifications(r, t, teacherEmail, notification, http.StatusOK, expectedRecipients, mock)
+}
+
 func testRetrieveForNotificationsInvalidFormat(r *gin.Engine, t *testing.T, teacherEmail, notification string, mock sqlmock.Sqlmock) {
 	// Test the request with invalid notification format
 	testRequestForNotifications(r, t, teacherEmail, notification, http.StatusBadRequest, nil, mock)
@@ -73,6 +136,11 @@ func testRetrieveForNotificationsStudentNotFound(r *gin.Engine, t *testing.T, te
 
 	// Test the request
 	testRequestForNotifications(r, t, teacherEmail, notification, http.StatusBadRequest, nil, mock)
+}
+
+func testRetrieveForNotificationsTeacherNotFound(r *gin.Engine, t *testing.T, testMessage string, mock sqlmock.Sqlmock) {
+	// Test the request with teacher not found
+	testRequestForNotifications(r, t, "", testMessage, http.StatusBadRequest, nil, mock)
 }
 
 func testRequestForNotifications(r *gin.Engine, t *testing.T, teacherEmail, notification string, expectedStatus int, expectedRecipients []string, mock sqlmock.Sqlmock) {
