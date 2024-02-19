@@ -6,8 +6,6 @@ import (
 )
 
 func SyncDB() {
-	// Reset the database
-	DB.Migrator().DropTable(&models.Student{}, &models.Teacher{}, &models.TeacherStudentRelation{})
 	// Auto migrate all models
 	err := DB.AutoMigrate(&models.Teacher{}, &models.Student{})
 	if err != nil {
