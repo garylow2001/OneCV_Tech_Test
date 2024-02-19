@@ -28,7 +28,12 @@ func TestRegisterEndpoint(t *testing.T) {
 		testMissingTeacherInputFailure(r, t)
 	})
 
-	// Add more test cases as needed (e.g., invalid student emails, database errors, etc.)
+	// Test missing student input
+	t.Run("MissingStudentInput", func(t *testing.T) {
+		r, mock := setUpRouters("/api/register", api.RegisterHandler)
+		defer mock.ExpectClose()
+		testMissingStudentInputFailure(r, t, mock)
+	})
 }
 
 func testValidRegistrationSuccess(r *gin.Engine, t *testing.T, mock sqlmock.Sqlmock) {
@@ -47,6 +52,13 @@ func testValidRegistrationSuccess(r *gin.Engine, t *testing.T, mock sqlmock.Sqlm
 
 func testMissingTeacherInputFailure(r *gin.Engine, t *testing.T) {
 	testRequestForRegister(r, t, "", []string{"studentjon@gmail.com"}, http.StatusBadRequest, nil)
+}
+
+func testMissingStudentInputFailure(r *gin.Engine, t *testing.T, mock sqlmock.Sqlmock) {
+	mock.ExpectQuery(`^SELECT \* FROM "teachers" WHERE email = \$1 AND "teachers"."deleted_at" IS NULL ORDER BY "teachers"."id" LIMIT \$2`).
+		WithArgs("teacherken@gmail.com", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "email"}).AddRow(1, "teacherken@gmail.com"))
+	testRequestForRegister(r, t, "teacherken@gmail.com", []string{}, http.StatusBadRequest, nil)
 }
 
 func testRequestForRegister(r *gin.Engine, t *testing.T, teacherEmail string, students []string, expectedStatus int, mock sqlmock.Sqlmock) {
