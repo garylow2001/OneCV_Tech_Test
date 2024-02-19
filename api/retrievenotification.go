@@ -27,8 +27,9 @@ func RetrieveForNotificationsHandler(db *gorm.DB) gin.HandlerFunc {
 		mentionedStudentsEmails := getMentionedStudentsInNotification(requestData.Notification)
 
 		// Validate mentioned students and remove suspended students from the list
-		studentDoesNotExistErr := validateMentionedStudents(mentionedStudentsEmails, db, c)
+		studentEmail, studentDoesNotExistErr := validateMentionedStudents(mentionedStudentsEmails, db, c)
 		if studentDoesNotExistErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("Failed to retrieve student with email: %s", studentEmail)})
 			return
 		}
 
@@ -88,14 +89,13 @@ func uniqueConcat(mentionedStudentsEmails []string, studentsUnderTeacherEmails [
 	return recipients
 }
 
-func validateMentionedStudents(mentionedStudentsEmails []string, db *gorm.DB, c *gin.Context) error {
+func validateMentionedStudents(mentionedStudentsEmails []string, db *gorm.DB, c *gin.Context) (string, error) {
+	var student struct {
+		Suspended bool
+	}
 	for i, studentEmail := range mentionedStudentsEmails {
-		var student struct {
-			Suspended bool
-		}
 		if err := db.Table("students").Where("email = ?", studentEmail).First(&student).Error; err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("Failed to retrieve student with email: %s", studentEmail)})
-			return err
+			return studentEmail, err
 		}
 		if student.Suspended {
 			if i >= 0 && i < len(mentionedStudentsEmails) {
@@ -103,5 +103,5 @@ func validateMentionedStudents(mentionedStudentsEmails []string, db *gorm.DB, c 
 			}
 		}
 	}
-	return nil
+	return "", nil
 }
