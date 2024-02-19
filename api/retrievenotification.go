@@ -9,15 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
+type NotificationRequest struct {
+	TeacherEmail string `json:"teacher" binding:"required"`
+	Notification string `json:"notification" binding:"required"`
+}
+
 func RetrieveForNotificationsHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Parse request body
-		var requestData struct {
-			TeacherEmail string `json:"teacher" binding:"required"`
-			Notification string `json:"notification" binding:"required"`
-		}
+		var requestData NotificationRequest
 		if err := c.BindJSON(&requestData); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request format"})
 			return
 		}
 
@@ -31,14 +33,8 @@ func RetrieveForNotificationsHandler(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		// Retrieve students who are registered with the teacher
-		var studentsUnderTeacherEmails []string
-		if err := db.Table("teachers").
-			Select("students.email").
-			Distinct().
-			Joins("inner join teacher_student_relations on teachers.id = teacher_student_relations.teacher_id").
-			Joins("inner join students on teacher_student_relations.student_id = students.id").
-			Where("teachers.email = ? AND students.suspended = ?", requestData.TeacherEmail, false).
-			Scan(&studentsUnderTeacherEmails).Error; err != nil {
+		studentsUnderTeacherEmails, retrieveStudentsErr := retrieveStudentsUnderTeacher(db, requestData.TeacherEmail, c)
+		if retrieveStudentsErr != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to retrieve students"})
 			return
 		}
@@ -48,6 +44,20 @@ func RetrieveForNotificationsHandler(db *gorm.DB) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{"recipients": recipients})
 	}
+}
+
+func retrieveStudentsUnderTeacher(db *gorm.DB, teacherEmail string, c *gin.Context) ([]string, error) {
+	var studentsUnderTeacherEmails []string
+	if err := db.Table("teachers").
+		Select("students.email").
+		Distinct().
+		Joins("inner join teacher_student_relations on teachers.id = teacher_student_relations.teacher_id").
+		Joins("inner join students on teacher_student_relations.student_id = students.id").
+		Where("teachers.email = ? AND students.suspended = ?", teacherEmail, false).
+		Scan(&studentsUnderTeacherEmails).Error; err != nil {
+		return nil, err
+	}
+	return studentsUnderTeacherEmails, nil
 }
 
 func getMentionedStudentsInNotification(notification string) []string {
